@@ -4,6 +4,44 @@
 #include <cassert>
 #include <fstream>
 #include <vector>
+#include <boost/lexical_cast.hpp>
+
+//From https://stackoverflow.com/a/37454181
+std::vector<std::string> split(const std::string& str, const std::string& delim)
+{
+  std::vector<std::string> tokens;
+  size_t prev = 0, pos = 0;
+  do
+  {
+    pos = str.find(delim, prev);
+    if (pos == std::string::npos) pos = str.length();
+    std::string token = str.substr(prev, pos-prev);
+    if (!token.empty()) tokens.push_back(token);
+    prev = pos + delim.length();
+  }
+  while (pos < str.length() && prev < str.length());
+  return tokens;
+}
+
+std::vector<double> split_to_doubles(const std::string& str, const std::string& delim)
+{
+  const std::vector<std::string> text = split(str, delim);
+  std::vector<double> ds;
+  ds.reserve(text.size());
+  std::transform(
+    std::begin(text),
+    std::end(text),
+    std::back_inserter(ds),
+    [](const std::string& s)
+    {
+      if (s.empty()) return 0.0;
+      if (s == " ") return 0.0;
+      return boost::lexical_cast<double>(s);
+      //return std::stod(s);
+    }
+  );
+  return ds;
+}
 
 ///Determines if a filename is a regular file
 ///From http://www.richelbilderbeek.nl/CppIsRegularFile.htm
@@ -43,11 +81,31 @@ std::vector<std::vector<double>> read_data(const std::string& filename)
   text.erase(text.end());
 
   std::vector<std::vector<double>> data(text.size());
+  const int n_lines = text.size();
+  for (int i = 0; i != n_lines; ++i)
+  {
+    data[i] = split_to_doubles(text[i], ", ");
+  }
   return data;
 }
 
+
 void test()
 {
+  const std::string first_line{"500, 0.5, 0.5, 0.56, 0.44, 0.051882, 0.0656406, 37, 0.52, 0.48, 0.52, 0.48, 0.044718, 0.057978, 40, 0.48, 0.52, 0.6, 0.4, 0.03924, 0.060282, 36, 0.48, 0.52, 0.52, 0.48, 0.055404, 0.059424, 47, 0.5, 0.5, 0.54, 0.46, 0.041742, 0.03954, 32, "};
+  // Splitting should split correctly
+  {
+    assert(split(first_line, ", ")[0] == "500");
+    assert(split(first_line, ", ")[1] == "0.5");
+    assert(split(first_line, ", ")[2] == "0.5");
+  }
+  // Splitting to double should split correctly
+  {
+    const auto ds = split_to_doubles(first_line, ", ");
+    assert(ds[0] == 500);
+    assert(ds[1] == 0.5);
+    assert(ds[2] == 0.5);
+  }
   const std::string filename{"seed_1610984655324250886_results.csv"};
   //File must be present
   {
@@ -64,8 +122,13 @@ void test()
     const auto d = read_data("seed_1610984655324250886_results.csv");
     assert(d.size() == 19);
   }
-  //Data has 37 columns
+  //Data has 36 columns (the last one is empty)
+  {
+    const auto d = read_data("seed_1610984655324250886_results.csv");
 
+    assert(d[0].size() == 36);
+
+  }
 }
 
 int main(int argc, char ** argv)
