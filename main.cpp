@@ -137,13 +137,15 @@ int main(int argc, char ** argv)
 
   const std::vector<std::string> args(argv, argv + argc);
 
-  // We've already tested, so the program is done
-  if (args.size() > 1 && args[1] == "--test")
-    return 0;
+  //Use an argument to specify the file to work on,
+  //else use default filename of seed_1610984655324250886_results.csv
+  std::string filename = "";
+  if (args.size() == 1) filename = "seed_1610984655324250886_results.csv";
+  else filename = args[1];
+  assert(is_file_present(filename));
 
-  const auto data = read_data("seed_1610984655324250886_results.csv");
+  const auto data = read_data(filename);
   const int n_rows = data.size();
-  //const int n_cols = data[0].size();
   const int n_cols = 5;
 
 
