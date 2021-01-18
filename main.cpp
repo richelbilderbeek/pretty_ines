@@ -141,17 +141,34 @@ int main(int argc, char ** argv)
   if (args.size() > 1 && args[1] == "--test")
     return 0;
 
+  const auto data = read_data("seed_1610984655324250886_results.csv");
+  const int n_rows = data.size();
+  //const int n_cols = data[0].size();
+  const int n_cols = 5;
+
+
   // Create main window
   sf::RenderWindow window(sf::VideoMode(640, 480), "SFML Graphics");
 
-  sf::RectangleShape rectangle(sf::Vector2f(10.0,10.0));
-  rectangle.setPosition(100.0, 200.0);
-  rectangle.setFillColor(sf::Color(255, 128, 0));
-  window.draw(rectangle);
+  //Draw stuff
+  for (int row = 0 ; row != n_rows; ++row)
+  {
+    for (int col = 0 ; col != n_cols ; ++col)
+    {
+      sf::RectangleShape rectangle(sf::Vector2f(1.0,1.0));
+      rectangle.setPosition(col, row);
+      const double r{data[row][1 * (5 * col)] * 255.0};
+      const double g{data[row][3 * (5 * col)] * 255.0};
+      rectangle.setFillColor(sf::Color(r, g, 0));
+      window.draw(rectangle);
+
+    }
+  }
 
   // Display all shapes
   window.display();
 
+  // Save
   sf::Texture texture;
   texture.create(window.getSize().x, window.getSize().y);
   texture.update(window);
